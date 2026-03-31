@@ -20,7 +20,7 @@ passport.use(new OpenIDConnectStrategy({
     clientID: '3MVG98Gq2O8Po4ZntJzNHOYpMgStYiuz93_weStAix2GgLLcPIfH.QGA.W07v60Ynp0Fn95u1PPPTA07jRYJO',
     clientSecret: 'C91C7F8D45F27FEEA16707ABC6F664AF9C2D7828C792E450211F245B6D3EF492',
     callbackURL: 'https://ebr-mock-website-oidc-auth-78344c12b20d.herokuapp.com/auth/sfdc/callback',
-    scope: 'openid profile'
+    scope: 'openid profile email'
   },
     function(issuer, profile, done) {
     // 1. Log the exact payload to your Heroku logs so you can inspect it!
