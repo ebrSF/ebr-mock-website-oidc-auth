@@ -23,7 +23,8 @@ passport.use(new OpenIDConnectStrategy({
     scope: 'openid profile'
   },
   function(issuer, profile, done) {
-    return done(null, profile);
+    //Pass the raw, unfiltered JSON from Salesforce directly to the session
+    return done(null,  profile._json);
   }
 ));
 
