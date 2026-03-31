@@ -17,8 +17,8 @@ passport.use(new OpenIDConnectStrategy({
     authorizationURL: `${SF_DOMAIN}/services/oauth2/authorize`,
     tokenURL: `${SF_DOMAIN}/services/oauth2/token`,
     userInfoURL: `${SF_DOMAIN}/services/oauth2/userinfo`,
-    clientID: '<YOUR_SF_CONSUMER_KEY>',
-    clientSecret: '<YOUR_SF_CONSUMER_SECRET>',
+    clientID: '3MVG98Gq2O8Po4ZntJzNHOYpMgStYiuz93_weStAix2GgLLcPIfH.QGA.W07v60Ynp0Fn95u1PPPTA07jRYJO',
+    clientSecret: 'C91C7F8D45F27FEEA16707ABC6F664AF9C2D7828C792E450211F245B6D3EF492',
     callbackURL: 'https://<your-heroku-app-b>.herokuapp.com/auth/sfdc/callback',
     scope: 'openid profile'
   },
