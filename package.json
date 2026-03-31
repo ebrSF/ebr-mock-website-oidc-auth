@@ -1,0 +1,19 @@
+{
+  "name": "site oidc app",
+  "version": "1.0.0",
+  "description": "A simple mocked Website acting as SP to demonstrate auth. with OIDC",
+  "main": "site_oidc_app.js",
+  "scripts": {
+    "start": "site_oidc_app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "passport": "^0.6.0",
+    "passport-saml": "^3.2.4"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
