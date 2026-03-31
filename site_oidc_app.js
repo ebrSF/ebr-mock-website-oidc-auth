@@ -22,9 +22,13 @@ passport.use(new OpenIDConnectStrategy({
     callbackURL: 'https://ebr-mock-website-oidc-auth-78344c12b20d.herokuapp.com/auth/sfdc/callback',
     scope: 'openid profile'
   },
-  function(issuer, profile, done) {
-    //Pass the raw, unfiltered JSON from Salesforce directly to the session
-    return done(null,  profile._json);
+    function(issuer, profile, done) {
+    // 1. Log the exact payload to your Heroku logs so you can inspect it!
+    console.log("Full OIDC Profile from Salesforce: ", JSON.stringify(profile, null, 2));
+    
+    // 2. Safely return the user object (fallback to the main profile if _json is missing)
+    const userData = profile._json ? profile._json : profile;
+    return done(null, userData); 
   }
 ));
 
