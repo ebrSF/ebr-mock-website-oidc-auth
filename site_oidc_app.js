@@ -9,8 +9,9 @@ app.use(session({ secret: 'mxns-poc-secret-b', resave: false, saveUninitialized:
 app.use(passport.initialize());
 app.use(passport.session());
 
-// UPDATED: Standard Salesforce Domain
-const SF_DOMAIN = 'https://ebr-customer-identity-demo.my.salesforce.com';
+// UPDATED: Standard Salesforce Domain to custom community portal
+//const SF_DOMAIN = 'https://ebr-customer-identity-demo.my.salesforce.com';
+const SF_DOMAIN = 'https://ebr-customer-identity-demo.my.site.com/portal';
 
 passport.use(new OpenIDConnectStrategy({
     issuer: SF_DOMAIN,
