@@ -23,44 +23,25 @@ passport.use(new OpenIDConnectStrategy({
     callbackURL: 'https://ebr-mock-website-oidc-auth-78344c12b20d.herokuapp.com/auth/sfdc/callback',
     scope: 'openid profile email id' // Critical for Custom Attributes
   },
-  function() {
-    // The 'done' callback is always the last argument
-    const done = arguments[arguments.length - 1];
-    let userData = { error: "Profile not found" };
+  // THE MAGIC FIX: We must explicitly declare 7 parameters so Passport passes the tokens!
+  function(issuer, profile, context, idToken, accessToken, refreshToken, done) {
+    
+    let userData = profile; // Fallback to basic profile just in case
 
-    // 1. Hunt for the raw ID Token. Because you checked the box in Salesforce, 
-    // it WILL be hiding somewhere in these arguments!
-    let idTokenStr = null;
-    for (let i = 0; i < arguments.length; i++) {
-        const arg = arguments[i];
-        
-        // Sometimes it hides inside the raw token response object
-        if (arg && typeof arg === 'object' && arg.id_token) {
-            idTokenStr = arg.id_token;
-            break;
-        }
-        // Other times it is passed as a standalone string (starts with 'ey' = JWT)
-        if (typeof arg === 'string' && arg.startsWith('ey') && arg.split('.').length === 3) {
-            idTokenStr = arg;
-            break;
-        }
-    }
-
-    // 2. Decode the ID Token to extract the pure Salesforce claims
-    if (idTokenStr) {
+    // Now idToken is explicitly handed to us by the library!
+    if (idToken) {
         try {
             // Split the JWT and decode the middle payload section
-            const base64Url = idTokenStr.split('.')[1];
+            const base64Url = idToken.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             userData = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+            
             console.log("SUCCESS! Decoded ID Token payload:", JSON.stringify(userData, null, 2));
         } catch (e) {
             console.error("Error decoding token:", e);
         }
     } else {
-        console.error("CRITICAL: ID Token missing! Library args were:", arguments);
-        // Fallback to standard profile just in case
-        userData = arguments[1] || userData;
+        console.error("CRITICAL: idToken is STILL missing from the payload!");
     }
 
     return done(null, userData); 
