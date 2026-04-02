@@ -91,12 +91,28 @@ app.get('/', (req, res) => {
 
 app.get('/auth/sfdc', passport.authenticate('openidconnect'));
 
-app.get('/auth/sfdc/callback', 
-  passport.authenticate('openidconnect', { failureRedirect: '/' }),
-  function(req, res) {
-    res.redirect('/');
-  }
-);
+app.get('/auth/salesforce/callback', function(req, res, next) {
+    // 1. Catch the Salesforce rejection BEFORE the server crashes
+    if (req.query.error === 'access_denied') {
+        // Render a beautiful, friendly HTML page you built
+        return res.status(403).send(`
+            <html>
+                <body style="font-family: sans-serif; text-align: center; padding: 50px;">
+                    <h2 style="color: #d9534f;">Access Denied</h2>
+                    <p>You do not have the required permissions to access the Analytics Portal.</p>
+                    <p>Please contact your Acme Corp administrator (Alice) to request access.</p>
+                    <a href="https://ebr-customer-identity-demo.my.site.com/portal/s/">Return to Portal</a>
+                </body>
+            </html>
+        `);
+    }
+
+    // 2. If there is no error, proceed with normal Passport/OAuth authentication
+    passport.authenticate('salesforce', {
+        successRedirect: '/dashboard',
+        failureRedirect: '/login'
+    })(req, res, next);
+});
 
 // OIDC Logout Route
 app.get('/logout', function(req, res, next) {
