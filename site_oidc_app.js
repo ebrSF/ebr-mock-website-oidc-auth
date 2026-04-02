@@ -21,24 +21,48 @@ passport.use(new OpenIDConnectStrategy({
     clientID: '3MVG98Gq2O8Po4ZntJzNHOYpMgStYiuz93_weStAix2GgLLcPIfH.QGA.W07v60Ynp0Fn95u1PPPTA07jRYJO',
     clientSecret: 'C91C7F8D45F27FEEA16707ABC6F664AF9C2D7828C792E450211F245B6D3EF492',
     callbackURL: 'https://ebr-mock-website-oidc-auth-78344c12b20d.herokuapp.com/auth/sfdc/callback',
-    scope: 'openid profile email id' // 'id' scope is required to release custom attributes!
+    scope: 'openid profile email id' // Critical for Custom Attributes
   },
   function() {
-    // The 'done' callback is always the last argument passed by the library
+    // The 'done' callback is always the last argument
     const done = arguments[arguments.length - 1];
-    
-    let userData = { error: "Could not fetch profile data from Salesforce" };
-    
-    // Safely scan all arguments to find the raw Salesforce profile data
-    for (let arg of arguments) {
-        // The standard Passport profile object stores the raw IdP response inside '_json'
-        if (arg && typeof arg === 'object' && arg._json) {
-            userData = arg._json;
+    let userData = { error: "Profile not found" };
+
+    // 1. Hunt for the raw ID Token. Because you checked the box in Salesforce, 
+    // it WILL be hiding somewhere in these arguments!
+    let idTokenStr = null;
+    for (let i = 0; i < arguments.length; i++) {
+        const arg = arguments[i];
+        
+        // Sometimes it hides inside the raw token response object
+        if (arg && typeof arg === 'object' && arg.id_token) {
+            idTokenStr = arg.id_token;
+            break;
+        }
+        // Other times it is passed as a standalone string (starts with 'ey' = JWT)
+        if (typeof arg === 'string' && arg.startsWith('ey') && arg.split('.').length === 3) {
+            idTokenStr = arg;
             break;
         }
     }
-    
-    console.log("Raw Salesforce Payload: ", JSON.stringify(userData, null, 2));
+
+    // 2. Decode the ID Token to extract the pure Salesforce claims
+    if (idTokenStr) {
+        try {
+            // Split the JWT and decode the middle payload section
+            const base64Url = idTokenStr.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            userData = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+            console.log("SUCCESS! Decoded ID Token payload:", JSON.stringify(userData, null, 2));
+        } catch (e) {
+            console.error("Error decoding token:", e);
+        }
+    } else {
+        console.error("CRITICAL: ID Token missing! Library args were:", arguments);
+        // Fallback to standard profile just in case
+        userData = arguments[1] || userData;
+    }
+
     return done(null, userData); 
   }
 ));
