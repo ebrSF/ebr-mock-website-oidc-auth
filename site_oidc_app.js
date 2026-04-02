@@ -91,10 +91,10 @@ app.get('/', (req, res) => {
 
 app.get('/auth/sfdc', passport.authenticate('openidconnect'));
 
-// 1. Update the route to match '/auth/sfdc/callback'
+// 1. Handle the callback from Salesforce
 app.get('/auth/sfdc/callback', function(req, res, next) {
     
-    // 2. Check for the exact error code Salesforce is returning
+    // 2. Check for the exact error code Salesforce is returning (User lacks Perm Set)
     if (req.query.error === 'OAUTH_APP_ACCESS_DENIED') {
         // Render your friendly HTML page instead of crashing
         return res.status(403).send(`
@@ -110,10 +110,11 @@ app.get('/auth/sfdc/callback', function(req, res, next) {
     }
 
     // 3. If there is no error, proceed with normal authentication
-    // (Ensure 'salesforce' matches whatever name you gave your passport strategy)
-    passport.authenticate('salesforce', {
-        successRedirect: '/dashboard', // Or wherever your app goes on success
-        failureRedirect: '/login'
+    // CHANGED: Using 'openidconnect' to match your strategy initialization
+    // CHANGED: Redirects point to '/' because that is where your renderPage() lives
+    passport.authenticate('openidconnect', {
+        successRedirect: '/', 
+        failureRedirect: '/'
     })(req, res, next);
 });
 
