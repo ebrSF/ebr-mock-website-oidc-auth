@@ -21,14 +21,39 @@ passport.use(new OpenIDConnectStrategy({
     clientID: '3MVG98Gq2O8Po4ZntJzNHOYpMgStYiuz93_weStAix2GgLLcPIfH.QGA.W07v60Ynp0Fn95u1PPPTA07jRYJO',
     clientSecret: 'C91C7F8D45F27FEEA16707ABC6F664AF9C2D7828C792E450211F245B6D3EF492',
     callbackURL: 'https://ebr-mock-website-oidc-auth-78344c12b20d.herokuapp.com/auth/sfdc/callback',
-    scope: 'openid profile email'
+    // 1. ADDED the 'id' scope to ensure Salesforce bundles the Custom Attributes
+    scope: 'openid profile email id' 
   },
-    function(issuer, profile, done) {
-    // 1. Log the exact payload to your Heroku logs so you can inspect it!
-    console.log("Full OIDC Profile from Salesforce: ", JSON.stringify(profile, null, 2));
+  function() {
+    // passport-openidconnect shifts arguments depending on the version.
+    // The 'done' callback is safely always the last argument.
+    const done = arguments[arguments.length - 1];
     
-    // 2. Safely return the user object (fallback to the main profile if _json is missing)
-    const userData = profile._json ? profile._json : profile;
+    // 2. Find the raw JWT ID Token among the callback arguments
+    let idTokenStr = null;
+    for (let i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] === 'string' && arguments[i].split('.').length === 3) {
+            idTokenStr = arguments[i];
+            break;
+        }
+    }
+    
+    // 3. Decode the token payload to get the pure Salesforce claims!
+    let userData = { error: 'Could not fetch profile' };
+    if (idTokenStr) {
+        try {
+            // Isolate the payload (middle section) of the JWT and decode the Base64
+            const base64Url = idTokenStr.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            userData = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
+        } catch(e) {
+            console.error("Error decoding ID Token:", e);
+        }
+    }
+    
+    // 4. Log the raw data so you can see your custom attributes!
+    console.log("Pure Salesforce Claims: ", JSON.stringify(userData, null, 2));
+    
     return done(null, userData); 
   }
 ));
